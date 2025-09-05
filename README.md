@@ -4,7 +4,7 @@ This example uses a non-blocking peripheral driver library (PDL) API function to
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-psoc4-non-blocking-flash-write-using-interrupt)
 
-[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzY4NjciLCJTcGVjIE51bWJlciI6IjAwMi0zNjg2NyIsIkRvYyBUaXRsZSI6IlBTT0MmdHJhZGU7IDQgOiBOb24tQmxvY2tpbmcgRmxhc2ggV3JpdGUgdXNpbmcgSW50ZXJydXB0IiwicmlkIjoicmFqYW5uYWdhdXRhIiwiRG9jIHZlcnNpb24iOiIxLjEuMCIsIkRvYyBMYW5ndWFnZSI6IkVuZ2xpc2giLCJEb2MgRGl2aXNpb24iOiJNQ0QiLCJEb2MgQlUiOiJJQ1ciLCJEb2MgRmFtaWx5IjoiUFNPQyJ9)
+[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzY4NjciLCJTcGVjIE51bWJlciI6IjAwMi0zNjg2NyIsIkRvYyBUaXRsZSI6IlBTT0MmdHJhZGU7IDQgOiBOb24tQmxvY2tpbmcgRmxhc2ggV3JpdGUgdXNpbmcgSW50ZXJydXB0IiwicmlkIjoicmFqYW5uYWdhdXRhIiwiRG9jIHZlcnNpb24iOiIxLjIuMCIsIkRvYyBMYW5ndWFnZSI6IkVuZ2xpc2giLCJEb2MgRGl2aXNpb24iOiJNQ0QiLCJEb2MgQlUiOiJJQ1ciLCJEb2MgRmFtaWx5IjoiUFNPQyJ9)
 
 ## Requirements
 
@@ -191,8 +191,8 @@ This example use a constant array with a size equaling the size of one flash row
 
  Resource  |  Alias/object     |    Purpose
  :------- | :------------    | :------------
- GPIO | LED_OK | To display the success and failure information
- GPIO | LED_ERROR | To display the success and failure information
+ GPIO | LED_OK  (LED1 or LED6)  | To display the success and failure information
+ GPIO | LED_ERROR (LED2 or LED7) | To display the success and failure information
 
 <br>
 
@@ -221,7 +221,7 @@ Document title: *CE236867* – *PSOC&trade; 4: Non-Blocking Flash Write using In
  ------- | ---------------------
  1.0.0   | New code example
  1.1.0   | Added support for KIT_PSOC4-HVPA-144K_LITE
-
+ 1.2.0   | Added LED number in Table 1
 <br>
 
 ---------------------------------------------------------
