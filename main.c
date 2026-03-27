@@ -2,104 +2,101 @@
  * File Name:   main.c
  *
  * Description: This is the source code for the Non-Blocking Flash Write using
- * Interrupt PSoC 4 Application for ModusToolbox.
+ * Interrupt PSOC 4 Application for ModusToolbox.
  *
  * Related Document: See README.md
  *
  *
- *******************************************************************************
- * Copyright 2023-2025, Cypress Semiconductor Corporation (an Infineon company) or
- * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
+ ******************************************************************************
+ * (c) 2023-2026, Infineon Technologies AG, or an affiliate of Infineon
+ * Technologies AG. All rights reserved.
+ * This software, associated documentation and materials ("Software") is
+ * owned by Infineon Technologies AG or one of its affiliates ("Infineon")
+ * and is protected by and subject to worldwide patent protection, worldwide
+ * copyright laws, and international treaty provisions. Therefore, you may use
+ * this Software only as provided in the license agreement accompanying the
+ * software package from which you obtained this Software. If no license
+ * agreement applies, then any use, reproduction, modification, translation, or
+ * compilation of this Software is prohibited without the express written
+ * permission of Infineon.
  *
- * This software, including source code, documentation and related
- * materials ("Software") is owned by Cypress Semiconductor Corporation
- * or one of its affiliates ("Cypress") and is protected by and subject to
- * worldwide patent protection (United States and foreign),
- * United States copyright laws and international treaty provisions.
- * Therefore, you may use this Software only as provided in the license
- * agreement accompanying the software package from which you
- * obtained this Software ("EULA").
- * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
- * non-transferable license to copy, modify, and compile the Software
- * source code solely for use in connection with Cypress's
- * integrated circuit products.  Any reproduction, modification, translation,
- * compilation, or representation of this Software except as specified
- * above is prohibited without the express written permission of Cypress.
- *
- * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress
- * reserves the right to make changes to the Software without notice. Cypress
- * does not assume any liability arising out of the application or use of the
- * Software or any product or circuit described in the Software. Cypress does
- * not authorize its products for use in any products where a malfunction or
- * failure of the Cypress product may reasonably be expected to result in
- * significant property damage, injury or death ("High Risk Product"). By
- * including Cypress's product in a High Risk Product, the manufacturer
- * of such system or application assumes all risk of such use and in doing
- * so agrees to indemnify Cypress against all liability.
- *******************************************************************************/
+ * Disclaimer: UNLESS OTHERWISE EXPRESSLY AGREED WITH INFINEON, THIS SOFTWARE
+ * IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING, BUT NOT LIMITED TO, ALL WARRANTIES OF NON-INFRINGEMENT OF
+ * THIRD-PARTY RIGHTS AND IMPLIED WARRANTIES SUCH AS WARRANTIES OF FITNESS FOR A
+ * SPECIFIC USE/PURPOSE OR MERCHANTABILITY.
+ * Infineon reserves the right to make changes to the Software without notice.
+ * You are responsible for properly designing, programming, and testing the
+ * functionality and safety of your intended application of the Software, as
+ * well as complying with any legal requirements related to its use. Infineon
+ * does not guarantee that the Software will be free from intrusion, data theft
+ * or loss, or other breaches ("Security Breaches"), and Infineon shall have
+ * no liability arising out of any Security Breaches. Unless otherwise
+ * explicitly approved by Infineon, the Software may not be used in any
+ * application where a failure of the Product or any consequences of the use
+ * thereof can reasonably be expected to result in personal injury.
+ *****************************************************************************/
 
-/*******************************************************************************
+/******************************************************************************
  * Include Header files
- *******************************************************************************/
+ *****************************************************************************/
 #include "cy_pdl.h"
 #include "cybsp.h"
 
-/*******************************************************************************
+/******************************************************************************
  * Macros and Constants
- ********************************************************************************/
-/* Set this macro to '1' to observe the failure case of flash write. A RAM
+ *****************************************************************************/
+/* Set this macro to 'true' to observe the failure case of flash write. A RAM
  * address is passed as row address argument to the flash write function instead
- * of a flash address causing the function to return error. 
+ * of a flash address causing the function to return error.
  */
-#define MAKE_FLASH_WRITE_FAIL (0u)
+#define MAKE_FLASH_WRITE_FAIL (false)
 
 /* Check MCU datasheet to get flash size. 
  * Flash Row starts with 0, for e.x Row0, Row1...RowN-1.
  * Last Row = RowN - 1
  */
-#define LAST_FLASH_ROW        (CY_FLASH_NUMBER_ROWS-1)
+#define LAST_FLASH_ROW (CY_FLASH_NUMBER_ROWS - 1)
 
 /* This array reserves space in the flash for one row of size CY_FLASH_SIZEOF_ROW.
  * Explicit initialization is required so that memory is allocated in flash
- * instead of RAM. 
+ * instead of RAM.
  */
 #define CALCULATE_FLASH_ADDRESS(rowNum) \
-        (CY_FLASH_BASE + ((rowNum) * CY_FLASH_SIZEOF_ROW))
+    (CY_FLASH_BASE + ((rowNum) * CY_FLASH_SIZEOF_ROW))
 
 /* CY_ALIGN ensures that the array address is an integer multiple of the row
- * size so that the array occupies one complete row. 
+ * size so that the array occupies one complete row.
  */
 CY_ALIGN(CY_FLASH_SIZEOF_ROW)
 
-#if (MAKE_FLASH_WRITE_FAIL == 0)
+#if (MAKE_FLASH_WRITE_FAIL == false)
 
 /* Make the address point to last user flash row */
 const uint8_t *flash_data = (uint8_t *)CALCULATE_FLASH_ADDRESS(LAST_FLASH_ROW);
 #else
-    
+
 /* Make the address point to some RAM location */
 const uint8_t *flash_data = (uint8_t *)CY_SRAM_BASE;
-#endif  /* #if(MAKE_FLASH_WRITE_FAIL == 0) */
+#endif /* #if(MAKE_FLASH_WRITE_FAIL == false) */
 
-/*******************************************************************************
+/******************************************************************************
  * Global Variables
- ********************************************************************************/
+ *****************************************************************************/
 /* Store number of the Flash interrupts */
 volatile uint32_t count = 0u;
 
 /******************************************************************************
  * Flash interrupt configuration structure
- *******************************************************************************/
+ *****************************************************************************/
 cy_stc_sysint_t int_cfg = {
-        .intrSrc = cpuss_interrupt_spcif_IRQn,    /* Interrupt Source*/
-        .intrPriority = 0u                       /* Interrupt Priority*/
+    .intrSrc = cpuss_interrupt_spcif_IRQn, /* Interrupt Source*/
+    .intrPriority = 0u                     /* Interrupt Priority*/
 };
 
-/*******************************************************************************
+/******************************************************************************
  * Function Name: Flash ISR
- ********************************************************************************
+ ******************************************************************************
  * Summary: Flash interrupt service routine. This function does the following:
  * 1. Call Cy_Flash_ResumeWrite().
  * 2. Increments count.
@@ -110,24 +107,24 @@ cy_stc_sysint_t int_cfg = {
  * Return
  *  void
  *
- *******************************************************************************/
+ *****************************************************************************/
 void flash_isr(void)
 {
-    (void) Cy_Flash_ResumeWrite();
+    (void)Cy_Flash_ResumeWrite();
     count++;
 }
 
-/*******************************************************************************
+/******************************************************************************
  * Function Name: main
- ********************************************************************************
+ ******************************************************************************
  * Summary:
  * System entrance point. This function performs.
  * 1. Initializes the BSP.
  * 2. Initializes the data into RAM that will be later written into flash.
  * 3. Writes the data into flash.
  * 4. Verifies the data written into flash by comparing it with the RAM data.
- * 5. Turns the LED1 ON if the flash write is successful otherwise turns the
- *    LED2 ON.
+ * 5. Turns the LED1/LED6 ON if the flash write is successful otherwise turns
+ *    the LED2/LED7 ON.
  *
  * Parameters:
  *  void
@@ -135,7 +132,7 @@ void flash_isr(void)
  * Return:
  *  int
  *
- *******************************************************************************/
+ *****************************************************************************/
 int main(void)
 {
     cy_rslt_t result;
@@ -170,9 +167,9 @@ int main(void)
     {
         while (count < 3u)
         {
-           // Wait for Cy_Flash_ResumeWrite() to be called 3 times.
+            /* Wait for Cy_Flash_ResumeWrite() to be called 3 times. */
         }
-        
+
         if (Cy_Flash_IsOperationComplete() != CY_FLASH_DRV_SUCCESS)
         {
             error_flag = true;
@@ -187,7 +184,7 @@ int main(void)
             }
         }
     }
-    else    /* flash write operation did not start */
+    else /* flash write operation did not start */
     {
         /* Flag error if the Cy_Flash_StartWrite API status is not as expected */
         error_flag = true;
@@ -195,12 +192,12 @@ int main(void)
 
     if (error_flag)
     {
-        /* Turn the failure/LED2 ON */
+        /* Turn the failure; LED2/LED7 ON */
         Cy_GPIO_Clr(LED_ERROR_PORT, LED_ERROR_NUM);
     }
     else
     {
-        /* Turn the successful/LED1 ON */
+        /* Turn the successful; LED1/LED6 ON */
         Cy_GPIO_Clr(LED_OK_PORT, LED_OK_NUM);
     }
 
@@ -210,6 +207,5 @@ int main(void)
         Cy_SysPm_CpuEnterSleep();
     }
 }
-
 
 /* [] END OF FILE */
